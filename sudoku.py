@@ -2,48 +2,56 @@ from __future__ import annotations
 from typing import Iterable, Sequence
 
 
+COORDINATE_VALUES = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+
+
 class Sudoku:
     """A mutable sudoku puzzle."""
 
     def __init__(self, puzzle: Iterable[Iterable]):
         self._grid: list[str] = []
+        self._grid_int: list[list[int]] = []
+        self._empty_cells: list[list[int]] = []
+
+        y = -1
 
         for puzzle_row in puzzle:
-            row = ""
+            x = -1
+            y += 1
+
+            row_str = ""
+            row_int = []
 
             for element in puzzle_row:
-                row += str(element)
+                x += 1
 
-            self._grid.append(row)
+                row_str += element
+                row_int.append(int(element))
+
+                if element == "0":
+                    self._empty_cells.append([x, y])
+
+            self._grid.append(row_str)
+            self._grid_int.append(row_int)
+
 
     def place(self, value: int, x: int, y: int) -> None:
         """Place value at x,y."""
-        row = self._grid[y]
-        new_row = ""
-
-        for i in range(9):
-            if i == x:
-                new_row += str(value)
-            else:
-                new_row += row[i]
-
-        self._grid[y] = new_row
+        self._grid_int[y][x] = value
+        self._empty_cells.remove([x, y])
 
     def unplace(self, x: int, y: int) -> None:
         """Remove (unplace) a number at x,y."""
-        row = self._grid[y]
-        new_row = row[:x] + "0" + row[x + 1:]
-        self._grid[y] = new_row
+        self._grid_int[y][x] = 0
+        self._empty_cells.insert(1, [x, y])
 
     def value_at(self, x: int, y: int) -> int:
         """Returns the value at x,y."""
         value = -1
 
-        for i in range(9):
-            for j in range(9):
-                if i == x and j == y:
-                    row = self._grid[y]
-                    value = int(row[x])
+        if x in COORDINATE_VALUES and y in COORDINATE_VALUES:
+            row = self._grid_int[y]
+            value = int(row[x])
 
         return value
 
@@ -76,21 +84,19 @@ class Sudoku:
         Returns the next index (x,y) that is empty (value 0).
         If there is no empty spot, returns (-1,-1)
         """
-        next_x, next_y = -1, -1
-
-        for y in range(9):
-            for x in range(9):
-                if self.value_at(x, y) == 0 and next_x == -1 and next_y == -1:
-                    next_x, next_y = x, y
+        if len(self._empty_cells) == 0:
+            next_x = -1
+            next_y = -1
+        else:
+            next_coordinates = self._empty_cells[0]
+            next_x = next_coordinates[0]
+            next_y = next_coordinates[1]
 
         return next_x, next_y
 
     def row_values(self, i: int) -> Iterable[int]:
         """Returns all values at i-th row."""
-        values = []
-
-        for j in range(9):
-            values.append(self.value_at(j, i))
+        values = self._grid_int[i]
 
         return values
 
@@ -99,7 +105,8 @@ class Sudoku:
         values = []
 
         for j in range(9):
-            values.append(self.value_at(i, j))
+            row = self._grid_int[j]
+            values.append(row[i])
 
         return values
 
@@ -118,31 +125,35 @@ class Sudoku:
 
         for x in range(x_start, x_start + 3):
             for y in range(y_start, y_start + 3):
-                values.append(self.value_at(x, y))
+                values.append(self._grid_int[y][x])
 
         return values
+
+    def cast_solved(self) -> None:
+        y = -1
+
+        for row_puzzle in self._grid_int:
+            y += 1
+            row = ""
+
+            for digit in row_puzzle:
+                row += str(digit)
+
+            
+            self._grid[y] = row
+
 
     def is_solved(self) -> bool:
         """
         Returns True if and only if all rows, columns and blocks contain
         only the numbers 1 through 9. False otherwise.
         """
-        values = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        if len(self._empty_cells) != 0:
+            return False
 
-        result = True
+        self.cast_solved()
 
-        for i in range(9):
-            for value in values:
-                if value not in self.column_values(i):
-                    result = False
-
-                if value not in self.row_values(i):
-                    result = False
-
-                if value not in self.block_values(i):
-                    result = False
-
-        return result
+        return True
 
     def __str__(self) -> str:
         representation = ""
