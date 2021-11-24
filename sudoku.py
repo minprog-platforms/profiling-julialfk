@@ -1,5 +1,12 @@
+# Name: Julia Liem
+# Student number: 12043761
+"""
+Includes a sudoku class to solve a given unsolved sudoku
+"""
+
+
 from __future__ import annotations
-from typing import Iterable, Sequence
+from typing import Iterable
 
 
 COORDINATE_VALUES = {0, 1, 2, 3, 4, 5, 6, 7, 8}
@@ -9,10 +16,13 @@ class Sudoku:
     """A mutable sudoku puzzle."""
 
     def __init__(self, puzzle: Iterable[Iterable]):
+        # grid in string and integer format
         self._grid: list[str] = []
         self._grid_int: list[list[int]] = []
+        # list of empty cell coordinates
         self._empty_cells: list[list[int]] = []
 
+        # copy grid from input into _grid and _grid_int
         y = -1
 
         for puzzle_row in puzzle:
@@ -25,26 +35,30 @@ class Sudoku:
             for element in puzzle_row:
                 x += 1
 
+                # copy each element into temporary row
                 row_str += element
                 row_int.append(int(element))
 
+                # if cell is empty, write down coordinates
                 if element == "0":
                     self._empty_cells.append([x, y])
 
+            # copy each row into grids
             self._grid.append(row_str)
             self._grid_int.append(row_int)
 
-
     def place(self, value: int, x: int, y: int) -> None:
-        """Place value at x,y."""
+        """Place value at x,y and remove empty cell coordinates"""
         self._grid_int[y][x] = value
         self._empty_cells.remove([x, y])
 
     def unplace(self, x: int, y: int) -> None:
-        """Remove (unplace) a number at x,y."""
+        """Remove (unplace) a number at x,y and add empty cell coordinates"""
         self._grid_int[y][x] = 0
         self._empty_cells.insert(1, [x, y])
 
+    # this function is unused for solving the sudoku
+    # as such, this function will not be further optimized
     def value_at(self, x: int, y: int) -> int:
         """Returns the value at x,y."""
         value = -1
@@ -84,6 +98,8 @@ class Sudoku:
         Returns the next index (x,y) that is empty (value 0).
         If there is no empty spot, returns (-1,-1)
         """
+        # checks if there are still empty cells
+        # if there are, take coordinates from first entry of empty cell list
         if len(self._empty_cells) == 0:
             next_x = -1
             next_y = -1
@@ -130,23 +146,26 @@ class Sudoku:
         return values
 
     def cast_solved(self) -> None:
+        """
+        formats the integer grid into a string grid and saves it into self._grid
+        """
         y = -1
 
         for row_puzzle in self._grid_int:
             y += 1
             row = ""
 
+            # cast every digit into string and add it to the row
             for digit in row_puzzle:
                 row += str(digit)
 
-            
+            # add row to string grid
             self._grid[y] = row
-
 
     def is_solved(self) -> bool:
         """
-        Returns True if and only if all rows, columns and blocks contain
-        only the numbers 1 through 9. False otherwise.
+        Reformats and saves the integer grid and returns True if and only if all rows,
+        columns and blocks contain only the numbers 1 through 9. False otherwise.
         """
         if len(self._empty_cells) != 0:
             return False
